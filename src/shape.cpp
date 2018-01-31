@@ -1,7 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-void draw_rectangle(unsigned int VAO, unsigned int VBO, unsigned int EBO)
+void make_rectangle(unsigned int VAO, unsigned int VBO, unsigned int EBO)
 {
 	float vertices[] = {
          1.0f,  1.0f, 0.0f,  // top right

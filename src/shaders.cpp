@@ -1,13 +1,42 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <cstdio>
 #include <iostream>
 
-int compile_shader(int shader_type, const GLchar * const * source)
+int compile_shader(int shader_type, const char* filename)
 {
+	FILE * pFile;
+	long lSize;
+	char * buffer;
+	size_t result;
+
+	pFile = fopen (filename, "r");
+	if (pFile==NULL) {fputs ("File error",stderr); exit (1);}
+
+	// obtain file size:
+	fseek (pFile , 0 , SEEK_END);
+	lSize = ftell (pFile);
+	rewind (pFile);
+
+	// allocate memory to contain the whole file:
+	buffer = (char*) malloc (sizeof(char)*lSize);
+	if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+
+	// copy the file into the buffer:
+	result = fread (buffer,1,lSize,pFile);
+	if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+
+	/* the whole file is now loaded in the memory buffer. */
+
+	// terminate
+	fclose (pFile);
+
 	int shader = glCreateShader(shader_type);
-	glShaderSource(shader, 1, source, NULL);
+	glShaderSource(shader, 1, &buffer, NULL);
     glCompileShader(shader);
+
+	free (buffer);
 
     // check for shader compile errors
     int success;
@@ -16,7 +45,7 @@ int compile_shader(int shader_type, const GLchar * const * source)
     if (!success)
     {
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::COMPILATION_FAILED: " << filename << "\n" << infoLog << std::endl;
     }
 
     return shader;

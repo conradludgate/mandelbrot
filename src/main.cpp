@@ -1,23 +1,21 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <shaders.hpp>
-
 #include <cmath>
 #include <iostream>
 
-int window_init();
-int compile_shader(int shader_type, const GLchar * const * source);
-void draw_rectangle(unsigned int VAO, unsigned int VBO, unsigned int EBO);
+int compile_shader(int shader_type, const char* filename);
+void make_rectangle(unsigned int VAO, unsigned int VBO, unsigned int EBO);
+
+const unsigned int SCR_WIDTH = 1280;
+const unsigned int SCR_HEIGHT = 720;
+float SCR_RATIO = (float)SCR_WIDTH / (float)SCR_HEIGHT;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+	SCR_RATIO = (float)width / (float)height;
     glViewport(0, 0, width, height);
 }
-
-const unsigned int SCALE = 60;
-const unsigned int SCR_WIDTH = 16 * SCALE;
-const unsigned int SCR_HEIGHT = 9 * SCALE;
 
 int main()
 {
@@ -44,8 +42,8 @@ int main()
 	}
 
 	// Compile Shaders
-	int vertexShader = compile_shader(GL_VERTEX_SHADER, &vertexShaderSource);
-	int fragmentShader = compile_shader(GL_FRAGMENT_SHADER, &fragmentShaderSource);
+	int vertexShader = compile_shader(GL_VERTEX_SHADER, "vertShader.glsl");
+	int fragmentShader = compile_shader(GL_FRAGMENT_SHADER, "fragShader.glsl");
 
 	// Link Shaders
 	int shaderProgram = glCreateProgram();
@@ -69,7 +67,7 @@ int main()
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
-	draw_rectangle(VAO, VBO, EBO);
+	make_rectangle(VAO, VBO, EBO);
 
 	float startx = -0.5;
 	float starty = 0.0;
@@ -91,15 +89,20 @@ int main()
 			break;
 		}
 
-		float zoom = 4.5f * pow(2.0f, timeValue);
+		float zoom = pow(2.0f, 1-timeValue);
+		float pan = 1 - exp(-timeValue);
 
 		glUseProgram(shaderProgram);
 
+		// Move to location
 		int vertexColorLocation = glGetUniformLocation(shaderProgram, "center");
-		glUniform2f(vertexColorLocation, startx + (1 - exp(-timeValue-1)) * rangex, starty + (1 - exp(-timeValue-1)) * rangey);
+		glUniform2f(vertexColorLocation, 
+			startx + pan * rangex, 
+			starty + pan * rangey);
 
+		// Zoom in
 		vertexColorLocation = glGetUniformLocation(shaderProgram, "size");
-		glUniform2f(vertexColorLocation, 16.0f/zoom, 9.0f/zoom);
+		glUniform2f(vertexColorLocation, zoom * SCR_RATIO, zoom);
 
 		// Draw Rectangle
 		glBindVertexArray(VAO);
