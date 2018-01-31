@@ -1,0 +1,1 @@
+g++ -o mb src/* -I include -lglfw -lGL -ldl
