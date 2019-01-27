@@ -1,22 +1,48 @@
-IDIR=include
-CC=g++
-CFLAGS=-I $(IDIR)
+#
+# Compiler flags
+#
+CXX = g++
+CXXFLAGS = -std=c++1z -I include
+LIBS = -lm -lglfw -lGL -ldl
 
-ODIR=obj
-SDIR=src
+#
+# Project files
+#
+SRCDIR = src
+SRCS = $(wildcard $(SRCDIR)/*)
+OBJS = $(SRCS:$(SRCDIR)/%.cpp=%.o)
+EXE  = mb
 
-LIBS=-lm -lglfw -lGL -ldl
+#
+# Release build settings
+#
+RELDIR = build
+RELOBJS = $(addprefix $(RELDIR)/, $(OBJS))
+RELCXXFLAGS = -O3 -DNDEBUG
 
-_OBJ = glad.o main.o shaders.o shape.o
-OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+.PHONY: all clean debug prep release remake
 
-$(ODIR)/%.o: src/%.cpp $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+# Default build
+all: prep release
 
-mb: $(OBJ)
-	g++ -o $@ $^ $(CFLAGS) $(LIBS)
+#
+# Release rules
+#
+release: $(EXE)
 
-.PHONY: clean
+$(EXE): $(RELOBJS)
+	$(CXX) $(CXXFLAGS) $(RELCXXFLAGS) $(LIBS) -o $(EXE) $^
+
+$(RELDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) -c $(CXXFLAGS) $(RELCXXFLAGS) $(LIBS) -o $@ $<
+
+#
+# Other rules
+#
+prep:
+	@mkdir -p $(RELDIR)
+
+remake: clean all
 
 clean:
-	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~ 
+	rm -f $(RELOBJS)
